@@ -1,10 +1,15 @@
 import { useLocation, Navigate } from "react-router-dom";
 
-export default function MainOutlet() {
+import MainOutlet from "../Templates/Outlet/MainOutlet";
+
+export default function AuthGuard({ isReroute = true }) {
   //   const { token } = useAuth(),
   // const location = useLocation();
 
-  return <Navigate to="home" />;
+  if (isReroute) {
+  }
+
+  return <>{isReroute ? <Navigate to="home" /> : <MainOutlet />}</>;
   //   return token ? (
   //     <Navigate to="home" />
   //   ) : (
