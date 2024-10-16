@@ -1,37 +1,34 @@
-import { lazy } from "react";
+import { lazy, LazyExoticComponent } from "react";
 
-const lazyWithRetry = (componentImport: any): any =>
+type TypeComponentImport = () => Promise<{ default: React.ComponentType<any> }>;
+
+export const lazyWithRetry = (
+  componentImport: TypeComponentImport
+): LazyExoticComponent<any> =>
   lazy(async () => {
-    const pageHasAlreadyBeenForceRefreshed = JSON.parse(
+    // Get presistence page refresh state.
+    const pageHasAlreadyBeenForceRefreshed: boolean = JSON.parse(
       window.localStorage.getItem("FORCE_REFRESHED") || "false"
     );
 
     try {
       const component = await componentImport();
 
-      window.localStorage.setItem("FORCE_REFRESHED", "false");
+      // Update presistence page refresh state.
+      if (pageHasAlreadyBeenForceRefreshed) {
+        window.localStorage.setItem("FORCE_REFRESHED", "false");
+      }
 
+      // Client on the latest version of the app.
       return component;
     } catch (error) {
       if (!pageHasAlreadyBeenForceRefreshed) {
-        // Client not on the latest version of the application
-
-        // clear cache to update app version
-        caches.keys().then((names) => {
-          names.forEach((name) => {
-            caches.delete(name);
-          });
-        });
-
+        // Client not on the latest version of the app, force refresh.
         window.localStorage.setItem("FORCE_REFRESHED", "true");
-
-        // Forcing to refresh
-        return window.location.reload();
+        window.location.reload();
       }
 
-      // Client already using the latest version of the application and file does not exist
+      // Throw error
       throw error;
     }
   });
-
-export default lazyWithRetry;
